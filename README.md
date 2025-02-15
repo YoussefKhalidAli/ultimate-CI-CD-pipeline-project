@@ -127,20 +127,9 @@ metadata:
 
 <h5>Step 5: Add Webhook to SonarQube Server</h5>
 <p>Navigate to <code>SonarQube → Configuration → Webhooks</code> and add:</p>
-<pre>http://<your-jenkins-ip>:8080/sonarqube-webhook/</pre>
+<pre>http://your-jenkins-ip:8080/sonarqube-webhook/</pre>
 
 <h5>Step 6: Add Nexus URL to pom.xml</h5>
 <p>Go to the <code>pom.xml</code> file in the root of the repository, scroll to the end, and change the IP addresses on lines 123 and 127 to match your Nexus server.</p>
-
-<h5>Step 7: Configure Email Notifications</h5>
-
-<ul>
-  <li>
-    Scroll to extended email notifications, add smtp.google.com to smtp server(if you are using a gmail), choose SSL and set port number to 465, add you email credentials.
-  </li>
-  <li>
-    Scroll to email notification, add smtp.google.com to smtp server(if you are using a gmail), choose SSL and set port number to 465, set username to your email and password to your app password.
-  </li>
-</ul>
 
 <h4>Write the pipeline</h4>
