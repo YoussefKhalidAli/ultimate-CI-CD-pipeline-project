@@ -132,4 +132,36 @@ metadata:
 <h5>Step 6: Add Nexus URL to pom.xml</h5>
 <p>Go to the <code>pom.xml</code> file in the root of the repository, scroll to the end, and change the IP addresses on lines 123 and 127 to match your Nexus server.</p>
 
-<h4>Write the pipeline</h4>
+<h4>the pipeline</h4>
+<pre>
+  pipeline {
+    agent any
+    tools {
+        jdk 'jdk17'
+        maven 'maven3'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+    stages {
+        stage('Git Checkout') { ... }
+        stage('Compile') { ... }
+        stage('Test') { ... }
+        stage('File System Scan') { ... } // Trivy scan
+        stage('SonarQube Analysis') { ... }
+        stage('Quality Gate') { ... }
+        stage('Build') { ... }
+        stage('Publish To Nexus') { ... }
+        stage('Build & Tag Docker Image') { ... }
+        stage('Docker Image Scan') { ... } // Trivy scan
+        stage('Push Docker Image') { ... }
+        stage('Deploy To Kubernetes') { ... }
+        stage('Verify Deployment') { ... }
+    }
+    post {
+        always {
+            // Email notification with build status
+        }
+    }
+}
+</pre>
