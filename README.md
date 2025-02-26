@@ -180,7 +180,7 @@ metadata:
         <li>Type: <code>t2.medium</code> (Ubuntu 22.04)</li>
         <li>Security Group: Open ports:
             <ul>
-                <li><code>9090</code> (Prometheus)</li>
+                <li><code>9091</code> (Prometheus)</li>
                 <li><code>3000</code> (Grafana)</li>
                 <li><code>9100</code> (Node Exporter)</li>
                 <li><code>9115</code> (Blackbox Exporter)</li>
