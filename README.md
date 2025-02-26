@@ -165,3 +165,113 @@ metadata:
     }
 }
 </pre>
+<h1>Phase 4: Monitoring with Prometheus, Grafana, and Exporters</h1>
+<h2>Overview</h2>
+<p>This phase sets up monitoring for the CI/CD pipeline, Kubernetes cluster, and application health using:</p>
+    <ul>
+        <li><strong>Prometheus</strong>: Metrics collection and alerting</li>
+        <li><strong>Grafana</strong>: Visualization dashboards</li>
+        <li><strong>Node Exporter</strong>: Host-level metrics (CPU, memory, disk)</li>
+        <li><strong>Blackbox Exporter</strong>: HTTP/HTTPS endpoint monitoring</li>
+    </ul>
+<h2>Prerequisites</h2>
+<h3>1. EC2 Instance</h3>
+    <ul>
+        <li>Type: <code>t2.medium</code> (Ubuntu 22.04)</li>
+        <li>Security Group: Open ports:
+            <ul>
+                <li><code>9090</code> (Prometheus)</li>
+                <li><code>3000</code> (Grafana)</li>
+                <li><code>9100</code> (Node Exporter)</li>
+                <li><code>9115</code> (Blackbox Exporter)</li>
+            </ul>
+        </li>
+    </ul>
+<h3>2. Jenkins Server</h3>
+<p>Ensure Prometheus metrics plugin is installed (<code>Metrics</code> plugin).</p>
+
+   <h2>Installation Guide</h2>
+
+  <h3>1. Install Prometheus</h3>
+    <pre><code>sudo apt update
+wget https://github.com/prometheus/prometheus/releases/download/v2.54.0/prometheus-2.54.0.linux-amd64.tar.gz
+tar -xvf prometheus-*.tar.gz
+cd prometheus-*/
+./prometheus --config.file=prometheus.yml &amp;</code></pre>
+    <p>Access Prometheus at: <code>http://&lt;EC2_IP&gt;:9091</code></p>
+
+   <h3>2. Install Grafana</h3>
+    <pre><code>sudo apt-get install -y adduser libfontconfig1
+wget https://dl.grafana.com/enterprise/release/grafana-enterprise_11.1.4_amd64.deb
+sudo dpkg -i grafana-*.deb
+sudo systemctl start grafana-server</code></pre>
+    <p>Access Grafana at: <code>http://&lt;EC2_IP&gt;:3000</code> (Default login: <code>admin/admin</code>)</p>
+
+   <h3>3. Install Node Exporter</h3>
+    <pre><code>wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+tar -xvf node_exporter-*.tar.gz
+cd node_exporter-*/
+./node_exporter &amp;
+curl http://localhost:9100/metrics</code></pre>
+
+   <h3>4. Install Blackbox Exporter</h3>
+    <pre><code>wget https://github.com/prometheus/blackbox_exporter/releases/download/v0.25.0/blackbox_exporter-0.25.0.linux-amd64.tar.gz
+tar -xvf blackbox_exporter-*.tar.gz
+cd blackbox_exporter-*/
+./blackbox_exporter &amp;
+curl http://localhost:9115/metrics</code></pre>
+
+   <h3>5. Configure Prometheus Targets</h3>
+    <p>Edit <code>prometheus.yml</code> and add:</p>
+    <pre><code>scrape_configs:
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'Jenkins'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ['&lt;JENKINS_IP&gt;:8080']
+
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://&lt;APPLICATION_IP&gt;:31508
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115</code></pre>
+    <p>Restart Prometheus:</p>
+    <pre><code>kill $(pgrep prometheus)
+./prometheus --config.file=prometheus.yml &amp;</code></pre>
+
+   <h3>6. Import Grafana Dashboards</h3>
+    <ul>
+        <li>Add Prometheus Data Source: <code>http://localhost:9091</code></li>
+        <li>Import Dashboards:
+            <ul>
+                <li>Node Exporter: Dashboard ID <code>1860</code></li>
+                <li>Blackbox Exporter: Dashboard ID <code>7587</code></li>
+            </ul>
+        </li>
+    </ul>
+
+   <h3>7. Monitor Jenkins</h3>
+    <p>Install Prometheus Metrics Plugin in Jenkins:</p>
+    <ul>
+        <li>Jenkins → Manage Plugins → Install <code>Metrics</code> plugin</li>
+        <li>Expose Metrics: <code>http://&lt;JENKINS_IP&gt;:8080/prometheus</code></li>
+    </ul>
+
+   <h2>Troubleshooting</h2>
+    <ul>
+        <li><strong>Prometheus Not Starting:</strong> Check config syntax: <code>./promtool check config prometheus.yml</code></li>
+        <li><strong>Grafana Login Issues:</strong> Reset password: <code>sudo grafana-cli admin reset-admin-password newpassword</code></li>
+        <li><strong>Firewall Issues:</strong> Ensure required ports are open in security group</li>
+    </ul>
